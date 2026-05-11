@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>유문암의 자몽 타르트 만들기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #FFF5F8;
+      min-height: 100vh;
+      display: flex; align-items: flex-start; justify-content: center;
+      padding: 2rem 1rem;
+    }
+    #app { width: 100%; max-width: 680px; color: #222; }
+    .card { background: #fff; border: 1px solid #FFD6E8; border-radius: 18px; padding: 2rem; }
+    .pk-btn {
+      font-family: 'Noto Sans KR', sans-serif; font-size: 15px; font-weight: 700;
+      padding: 12px 28px; border-radius: 12px; border: none;
+      background: #FF6B9D; color: #fff; cursor: pointer;
+      transition: background 0.15s, transform 0.1s; display: inline-block;
+    }
+    .pk-btn:hover { background: #E91E8C; }
+    .pk-btn:active { transform: scale(0.97); }
+    .pk-btn:disabled { background: #ddd; color: #aaa; cursor: default; }
+    .ghost-btn {
+      font-family: 'Noto Sans KR', sans-serif; font-size: 14px;
+      padding: 11px 24px; border-radius: 12px;
+      border: 1.5px solid #FF6B9D; background: transparent; color: #FF6B9D;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .ghost-btn:hover { background: #FFF0F5; }
+    .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+    /* 메인 */
+    #mainScreen { text-align: center; }
+    .main-emoji { font-size: 80px; margin-bottom: 1rem; display: block; }
+    .main-title { font-family: 'Jua', sans-serif; font-size: 30px; color: #C2185B; margin-bottom: 6px; }
+    .main-sub { font-size: 14px; color: #999; margin-bottom: 2rem; }
+    .name-section { margin-bottom: 1.8rem; }
+    .name-section label { font-size: 13px; color: #888; display: block; margin-bottom: 8px; }
+    .name-row { display: flex; gap: 8px; justify-content: center; align-items: center; }
+    .name-row input {
+      font-family: 'Noto Sans KR', sans-serif; font-size: 16px;
+      padding: 10px 16px; border: 1.5px solid #FFB3CF; border-radius: 12px;
+      outline: none; width: 200px; text-align: center; color: #222;
+    }
+    .name-row input:focus { border-color: #FF6B9D; }
+    .name-display { font-family: 'Jua', sans-serif; font-size: 20px; color: #FF6B9D; margin-bottom: 6px; }
+    .change-name-btn {
+      font-size: 12px; color: #aaa; background: none; border: none;
+      cursor: pointer; text-decoration: underline; padding: 0;
+    }
+    .main-btns { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    .main-btns .pk-btn, .main-btns .ghost-btn { width: 268px; text-align: center; }
+
+    /* 랭킹 */
+    .ranking-title { font-family: 'Jua', sans-serif; font-size: 22px; color: #C2185B; margin-bottom: 1.25rem; }
+    .rank-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+    .rank-item {
+      display: flex; align-items: center; gap: 14px;
+      background: #FFF0F5; border: 1px solid #FFD6E8;
+      border-radius: 12px; padding: 12px 16px;
+    }
+    .rank-item.gold   { background: #FFFBEA; border-color: #FFD700; }
+    .rank-item.silver { background: #F8F8F8; border-color: #C0C0C0; }
+    .rank-item.bronze { background: #FFF4EE; border-color: #CD7F32; }
+    .rank-num { font-family: 'Jua', sans-serif; font-size: 20px; width: 30px; text-align: center; }
+    .rank-name { flex: 1; font-size: 15px; font-weight: 700; }
+    .rank-score { font-size: 18px; font-weight: 700; color: #FF6B9D; }
+    .rank-date { font-size: 11px; color: #bbb; }
+    .rank-empty { text-align: center; color: #bbb; font-size: 14px; padding: 2rem 0; }
+
+    /* 게임 헤더 */
+    .title-bar {
+      background: #FF6B9D; border-radius: 16px;
+      padding: 14px 20px; margin-bottom: 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .title-bar .t { font-family: 'Jua', sans-serif; font-size: 18px; color: #fff; }
+    .title-bar .player-name { font-size: 12px; color: rgba(255,255,255,0.85); }
+    .title-bar .back-btn {
+      font-size: 12px; color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.2); border: none;
+      border-radius: 8px; padding: 4px 10px; cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .step-nav { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+    .step-dot { height: 7px; flex: 1; border-radius: 999px; background: #F0E0E8; border: 0.5px solid #FFCCE0; transition: background 0.3s; }
+    .step-dot.done { background: #FF6B9D; }
+    .step-dot.active { background: #FFB3CF; }
+    .stage-label {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #FFF0F5; border: 1px solid #FFB3CF;
+      border-radius: 10px; padding: 6px 14px; margin-bottom: 10px;
+      font-size: 14px; font-weight: 700; color: #C2185B;
+    }
+    .stage-label .num {
+      width: 22px; height: 22px; background: #FF6B9D; border-radius: 50%;
+      color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center;
+    }
+    .desc { font-size: 14px; color: #666; margin-bottom: 1rem; line-height: 1.7; }
+
+    /* 재료 */
+    .ing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+    .ing-card {
+      background: #fff; border: 1.5px solid #e0e0e0;
+      border-radius: 12px; padding: 10px 6px; text-align: center;
+      cursor: pointer; transition: all 0.15s; position: relative;
+    }
+    .ing-card.sel { background: #FFF0F5; border-color: #FF6B9D; }
+    .ing-card.wrong-sel { background: #FFF0F0; border-color: #E53935; }
+    .ing-card .ico { font-size: 28px; display: block; margin-bottom: 4px; }
+    .ing-card .nm { font-size: 11px; color: #888; }
+    .ing-card .chk {
+      position: absolute; top: 4px; right: 4px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #FF6B9D; color: #fff; font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .ing-card.sel .chk { opacity: 1; }
+    .ing-card.wrong-sel .chk { background: #E53935; opacity: 1; }
+    .ing-feedback { font-size: 13px; margin-bottom: 8px; min-height: 20px; font-weight: 700; }
+
+    /* 캔버스 */
+    .bowl-area {
+      background: #F5ECD7; border: 1px solid #D4B896;
+      border-radius: 16px; height: 200px; position: relative;
+      overflow: hidden; margin-bottom: 1rem;
+    }
+    .bowl-area canvas { display: block; width: 100%; height: 100%; }
+
+    /* 타이밍 게이지 */
+    .timing-wrap {
+      background: #FFF0F5; border: 1px solid #FFB3CF;
+      border-radius: 14px; padding: 16px; margin-bottom: 14px; text-align: center;
+    }
+    .timing-label { font-size: 13px; color: #C2185B; font-weight: 700; margin-bottom: 10px; }
+    .timing-bar-outer {
+      background: #FFD6E8; border-radius: 999px; height: 24px;
+      position: relative; overflow: hidden; margin-bottom: 10px; cursor: pointer;
+    }
+    .timing-bar-inner {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #FF6B9D, #FF3D7F);
+      position: absolute; left: 0; top: 0;
+    }
+    .timing-zone {
+      position: absolute; top: 0; height: 100%;
+      background: rgba(255,255,255,0.45);
+      border-left: 2px solid #fff; border-right: 2px solid #fff;
+    }
+    .timing-score-flash { font-family: 'Jua', sans-serif; font-size: 18px; min-height: 26px; color: #FF6B9D; }
+    .timing-tries { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+    /* 결과 */
+    .result-box {
+      background: linear-gradient(135deg, #FFE4EE, #FFF0F8);
+      border: 1px solid #FFB3CF; border-radius: 18px;
+      padding: 2.5rem; text-align: center;
+    }
+    .result-icon { font-size: 80px; animation: pop 0.5s ease; margin-bottom: 10px; display: block; }
+    @keyframes pop { 0%{transform:scale(0.5);opacity:0;}70%{transform:scale(1.12);}100%{transform:scale(1);opacity:1;} }
+    .result-grade { font-family: 'Jua', sans-serif; font-size: 26px; color: #C2185B; margin-bottom: 6px; }
+    .result-score { font-size: 40px; font-weight: 700; color: #FF6B9D; margin-bottom: 14px; }
+    .result-desc { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 1.5rem; }
+    .score-pills { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .pill { background: #FFF0F5; color: #C2185B; border: 1px solid #FFB3CF; border-radius: 999px; font-size: 12px; padding: 4px 12px; }
+    .saving-msg { font-size: 13px; color: #aaa; margin-top: 10px; min-height: 20px; }
+    
+    /* 브금 버튼 */
+    .bgm-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 1000;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #fff; border: 2px solid #FFD6E8;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; cursor: pointer; box-shadow: 0 4px 6px rgba(255,107,157,0.1);
+      transition: all 0.2s;
+    }
+    .bgm-btn:hover { background: #FFF0F5; transform: scale(1.05); }
+    .bgm-btn.off { opacity: 0.6; }
+  </style>
+</head>
+<body>
+<audio id="bgmAudio" loop>
+  <!-- 음악 파일을 준비했다면 아래 src 부분을 음악 파일 경로로 바꿔주세요. (예: bgm.mp3) -->
+  <source src="bgm.mp3" type="audio/mpeg">
+</audio>
+<button id="bgmToggleBtn" class="bgm-btn off" title="배경음악 켜기/끄기">🔇</button>
+
+<div id="app"></div>
+<script>
+  /* ── 배경음악 토글 ── */
+  const bgmAudio = document.getElementById('bgmAudio');
+  const bgmToggleBtn = document.getElementById('bgmToggleBtn');
+  let isBgmPlaying = false;
+  bgmToggleBtn.addEventListener('click', () => {
+    if (isBgmPlaying) {
+      bgmAudio.pause();
+      isBgmPlaying = false;
+      bgmToggleBtn.textContent = '🔇';
+      bgmToggleBtn.classList.add('off');
+    } else {
+      bgmAudio.play().catch(e => console.log('BGM 재생 실패 (브라우저 정책 등):', e));
+      isBgmPlaying = true;
+      bgmToggleBtn.textContent = '🔊';
+      bgmToggleBtn.classList.remove('off');
+    }
+  });
+
+  /* ══════════════════════════════════════
+     ★ Supabase 설정 — 이 두 줄만 바꾸면 됩니다
+  ══════════════════════════════════════ */
+  const SUPABASE_URL = 'https://lpvxkzxaporxugfxcohc.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwdnhrenhhcG9yeHVnZnhjb2hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0NjgxMTMsImV4cCI6MjA5NDA0NDExM30.wBdvMsOSrXvNSy3GqbntK6yettIK8R35gf7yqjLf9i0';
+
+  async function fetchRanking() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ranking?select=*&order=score.desc&limit=10`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error('fetch fail');
+    return res.json();
+  }
+
+  async function insertRanking(name, score) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ranking`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json', Prefer: 'return=minimal'
+      },
+      body: JSON.stringify({ name, score })
+    });
+    if (!res.ok) throw new Error('insert fail');
+  }
+
+  /* ── 플레이어 이름 ── */
+  let playerName = localStorage.getItem('tartPlayerName') || '';
+  function setPlayerName(n) { playerName = n.trim(); localStorage.setItem('tartPlayerName', playerName); }
+
+  /* ── 게임 상태 ── */
+  const STAGES = [
+    { id: 'mix',  title: '재료 섞기',       num: 1 },
+    { id: 'pour', title: '틀에 반죽 붓기',  num: 2 },
+    { id: 'bake', title: '오븐에 굽기',     num: 3 },
+    { id: 'deco', title: '자몽 데코레이션', num: 4 },
+  ];
+  const INGREDIENTS = [
+    { id: 'flour',   name: '박력분',   icon: '🌾', ok: true  },
+    { id: 'salt',    name: '소금',     icon: '🧂', ok: true  },
+    { id: 'butter',  name: '버터',     icon: '🧈', ok: true  },
+    { id: 'egg',     name: '계란',     icon: '🥚', ok: true  },
+    { id: 'cream',   name: '생크림',   icon: '🥛', ok: true  },
+    { id: 'mayo',    name: '마요네즈', icon: '🫙', ok: false },
+    { id: 'ketchup', name: '케첩',     icon: '🍅', ok: false },
+    { id: 'pepper',  name: '고추장',   icon: '🌶️', ok: false },
+    { id: 'soy',     name: '간장',     icon: '🍶', ok: false },
+    { id: 'honey',   name: '꿀',       icon: '🍯', ok: false },
+    { id: 'vinegar', name: '식초',     icon: '🫗', ok: false },
+    { id: 'curry',   name: '카레',     icon: '🍛', ok: false },
+  ];
+
+  let st = { stage:0, scores:[], selIng:new Set(), raf:null, wrongCount:0 };
+  function resetSt() { if(st.raf) cancelAnimationFrame(st.raf); st={stage:0,scores:[],selIng:new Set(),raf:null,wrongCount:0}; }
+  function addScore(id,v) { st.scores.push({id,v:Math.round(v)}); }
+  function totalScore() { return st.scores.length ? Math.round(st.scores.reduce((a,b)=>a+b.v,0)/st.scores.length) : 0; }
+
+  const app = document.getElementById('app');
+
+  /* ── 메인화면 ── */
+  function showMain() {
+    resetSt(); app.innerHTML='';
+    const wrap = document.createElement('div');
+    wrap.id = 'mainScreen';
+
+    const nameHtml = playerName
+      ? `<div class="name-section">
+           <div class="name-display">반가워요, ${playerName}님!</div>
+           <button class="change-name-btn" id="changeNameBtn">이름 변경</button>
+         </div>`
+      : `<div class="name-section">
+           <label>시작 전에 이름을 입력하세요</label>
+           <div class="name-row">
+             <input type="text" id="nameInput" placeholder="이름 입력" maxlength="8">
+             <button class="pk-btn" id="confirmNameBtn" style="padding:14px 20px;font-size:13px;">확인</button>
+           </div>
+         </div>`;
+
+    wrap.innerHTML = `
+      <div class="card" style="margin-top:1rem;">
+        <span class="main-emoji">🥧</span>
+        <div class="main-title">유문암의<br>자몽 타르트 만들기</div>
+        <div class="main-sub">4단계를 클리어해서 완벽한 타르트를 만들어보세요!</div>
+        ${nameHtml}
+        <div class="main-btns">
+          <button class="pk-btn" id="startBtn" ${!playerName?'disabled':''}>시작하기</button>
+          <button class="ghost-btn" id="rankBtn">랭킹 보기</button>
+        </div>
+      </div>`;
+    app.appendChild(wrap);
+
+    document.getElementById('startBtn').addEventListener('click', () => { if(playerName) showGame(); });
+    document.getElementById('rankBtn').addEventListener('click', showRanking);
+
+    if (!playerName) {
+      const input = document.getElementById('nameInput');
+      const confirmBtn = document.getElementById('confirmNameBtn');
+      function confirm() { const v=input.value.trim(); if(!v){input.focus();return;} setPlayerName(v); showMain(); }
+      confirmBtn.addEventListener('click', confirm);
+      input.addEventListener('keydown', e => { if(e.key==='Enter') confirm(); });
+    } else {
+      document.getElementById('changeNameBtn').addEventListener('click', () => {
+        playerName=''; localStorage.removeItem('tartPlayerName'); showMain();
+      });
+    }
+  }
+
+  /* ── 랭킹화면 ── */
+  async function showRanking() {
+    app.innerHTML='';
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+      <div class="card">
+        <div class="ranking-title">🏆 랭킹</div>
+        <div id="rankBody"><div style="text-align:center;color:#FFB3CF;padding:2rem 0;font-size:14px;">불러오는 중...</div></div>
+        <div class="btns">
+          <button class="ghost-btn" id="backBtn">돌아가기</button>
+          <button class="pk-btn" id="startBtn2" ${!playerName?'disabled':''}>바로 시작하기</button>
+        </div>
+      </div>`;
+    app.appendChild(wrap);
+    document.getElementById('backBtn').addEventListener('click', showMain);
+    document.getElementById('startBtn2').addEventListener('click', showGame);
+
+    try {
+      const list = await fetchRanking();
+      const medals = ['🥇','🥈','🥉'];
+      const cls = ['gold','silver','bronze'];
+      const rankBody = document.getElementById('rankBody');
+      if (!rankBody) return;
+      if (!list || list.length === 0) {
+        rankBody.innerHTML = '<div class="rank-empty">아직 기록이 없어요.<br>첫 번째 타르트를 만들어보세요!</div>';
+      } else {
+        rankBody.innerHTML = `<ul class="rank-list">${list.map((r,i)=>`
+          <li class="rank-item ${cls[i]||''}">
+            <span class="rank-num">${medals[i]||i+1}</span>
+            <span class="rank-name">${r.name}</span>
+            <span class="rank-score">${r.score}점</span>
+            <span class="rank-date">${r.created_at?new Date(r.created_at).toLocaleDateString('ko-KR'):''}</span>
+          </li>`).join('')}</ul>`;
+      }
+    } catch(e) {
+      const rb = document.getElementById('rankBody');
+      if(rb) rb.innerHTML='<div class="rank-empty">⚠️ 랭킹을 불러오지 못했어요.<br>Supabase 설정을 확인해주세요.</div>';
+    }
+  }
+
+  /* ── 게임 렌더 ── */
+  function showGame() { resetSt(); renderGame(); }
+
+  function renderGame() {
+    app.innerHTML='';
+    const header = document.createElement('div');
+    header.className='title-bar';
+    header.innerHTML=`<div><div class="t">🍑 자몽 타르트 만들기</div><div class="player-name">${playerName}님의 도전</div></div><button class="back-btn" id="homeBtn">처음으로</button>`;
+    app.appendChild(header);
+    document.getElementById('homeBtn').addEventListener('click', ()=>{ if(confirm('게임을 중단하고 처음으로 돌아갈까요?')) showMain(); });
+
+    const nav=document.createElement('div'); nav.className='step-nav'; nav.id='stepNav';
+    STAGES.forEach((_,i)=>{ const d=document.createElement('div'); d.className='step-dot'+(i<st.stage?' done':i===st.stage?' active':''); nav.appendChild(d); });
+    app.appendChild(nav);
+
+    const sw=document.createElement('div'); sw.id='stageWrap'; app.appendChild(sw);
+    renderStage();
+  }
+
+  function updateNav() {
+    const dots=document.querySelectorAll('.step-dot');
+    dots.forEach((d,i)=>{ d.className='step-dot'+(i<st.stage?' done':i===st.stage?' active':''); });
+  }
+
+  function renderStage() {
+    updateNav();
+    const w=document.getElementById('stageWrap'); w.innerHTML='';
+    const s=STAGES[st.stage];
+    if(!s){renderResult(w);return;}
+    const label=document.createElement('div'); label.className='stage-label';
+    label.innerHTML=`<div class="num">${s.num}</div>${s.title}`;
+    w.appendChild(label);
+    if(s.id==='mix') renderMix(w);
+    else if(s.id==='pour') renderPour(w);
+    else if(s.id==='bake') renderBake(w);
+    else if(s.id==='deco') renderDeco(w);
+  }
+
+  function next(score) {
+    if(score!==undefined) addScore(STAGES[st.stage].id, score);
+    if(st.raf){cancelAnimationFrame(st.raf);st.raf=null;}
+    st.stage++; renderStage();
+  }
+
+  /* ── 타이밍 게이지 ── */
+  function createTimingGauge({label, zoneStart, zoneEnd, tries, onResult}) {
+    const wrap=document.createElement('div'); wrap.className='timing-wrap';
+    wrap.innerHTML=`
+      <div class="timing-label" id="tLabel">${label}</div>
+      <div class="timing-bar-outer" id="tBarOuter">
+        <div class="timing-bar-inner" id="tBar" style="width:0%"></div>
+        <div class="timing-zone" style="left:${zoneStart}%;width:${zoneEnd-zoneStart}%"></div>
+      </div>
+      <div class="timing-score-flash" id="tFlash"></div>
+      <div class="timing-tries" id="tTries">남은 기회: ${tries}회</div>`;
+
+    let pos=0,dir=1,speed=1.2,usedTries=0,totalSc=0,running=true,raf;
+    function animate(){
+      if(!running)return;
+      pos+=dir*speed; if(pos>=100){pos=100;dir=-1;} if(pos<=0){pos=0;dir=1;}
+      const bar=wrap.querySelector('#tBar'); if(bar) bar.style.width=pos+'%';
+      raf=requestAnimationFrame(animate);
+    }
+    animate();
+
+    wrap.querySelector('#tBarOuter').addEventListener('click',()=>{
+      if(!running)return;
+      const inZone=pos>=zoneStart&&pos<=zoneEnd;
+      const distFromCenter=Math.abs(pos-(zoneStart+zoneEnd)/2);
+      const zoneHalf=(zoneEnd-zoneStart)/2;
+      let s,msg;
+      if(inZone){
+        const ratio=1-distFromCenter/zoneHalf;
+        s=Math.round(80+ratio*20);
+        msg=s>=95?'🎯 PERFECT!':'✅ GOOD!';
+      } else {
+        const dist=Math.min(Math.abs(pos-zoneStart),Math.abs(pos-zoneEnd));
+        s=Math.max(10,Math.round(60-dist*1.5));
+        msg=s>=40?'😅 아쉬워요':'❌ MISS';
+      }
+      totalSc+=s; usedTries++;
+      const flash=wrap.querySelector('#tFlash'); if(flash) flash.textContent=msg+' ('+s+'점)';
+      const triesLeft=tries-usedTries;
+      const triesTxt=wrap.querySelector('#tTries'); if(triesTxt) triesTxt.textContent=triesLeft>0?`남은 기회: ${triesLeft}회`:'완료!';
+      if(usedTries>=tries){
+        running=false; cancelAnimationFrame(raf);
+        setTimeout(()=>onResult(Math.round(totalSc/tries)),400);
+      } else {
+        speed=Math.min(3.8,speed+0.45);
+      }
+    });
+    return wrap;
+  }
+
+  /* ── STAGE 1: 재료 섞기 ── */
+  function renderMix(w){
+    const desc=document.createElement('p'); desc.className='desc';
+    desc.textContent='타르트에 필요한 재료 5가지를 정확히 골라주세요. 틀린 재료를 넣으면 감점됩니다.';
+    w.appendChild(desc);
+    st.selIng=new Set(); st.wrongCount=0;
+
+    const feedback=document.createElement('div'); feedback.className='ing-feedback';
+    feedback.style.color='#aaa'; feedback.textContent='재료를 선택하세요 (0 / 5)';
+    w.appendChild(feedback);
+
+    const grid=document.createElement('div'); grid.className='ing-grid';
+    const shuffled=[...INGREDIENTS].sort(()=>Math.random()-0.5);
+    const required=INGREDIENTS.filter(i=>i.ok).map(i=>i.id);
+
+    shuffled.forEach(ing=>{
+      const card=document.createElement('div'); card.className='ing-card';
+      card.innerHTML=`<span class="ico">${ing.icon}</span><span class="nm">${ing.name}</span><div class="chk">✓</div>`;
+      card.addEventListener('click',()=>{
+        if(st.selIng.has(ing.id)){
+          st.selIng.delete(ing.id); card.classList.remove('sel','wrong-sel');
+          if(!ing.ok) st.wrongCount=Math.max(0,st.wrongCount-1);
+        } else {
+          st.selIng.add(ing.id); card.classList.add(ing.ok?'sel':'wrong-sel');
+          if(!ing.ok) st.wrongCount++;
+        }
+        const correctSel=required.filter(r=>st.selIng.has(r)).length;
+        if(st.wrongCount>0){feedback.style.color='#E53935';feedback.textContent=`❌ 잘못된 재료가 ${st.wrongCount}개 포함됐어요`;}
+        else if(correctSel===5){feedback.style.color='#43A047';feedback.textContent='✅ 완벽해요! 5가지 재료를 모두 골랐습니다';}
+        else{feedback.style.color='#aaa';feedback.textContent=`재료를 선택하세요 (${correctSel} / 5)`;}
+        btn.disabled=!(correctSel===5&&st.wrongCount===0);
+      });
+      grid.appendChild(card);
+    });
+    w.appendChild(grid);
+
+    const btns=document.createElement('div'); btns.className='btns';
+    const btn=document.createElement('button'); btn.className='pk-btn'; btn.textContent='재료 넣고 섞기'; btn.disabled=true;
+    btn.addEventListener('click',()=>next(100));
+    btns.appendChild(btn); w.appendChild(btns);
+  }
+
+  /* ── STAGE 2: 틀에 반죽 붓기 ── */
+  function renderPour(w){
+    const desc=document.createElement('p'); desc.className='desc';
+    desc.textContent='핑크 구간에 맞춰 클릭하세요! 3번의 타이밍을 맞춰 반죽을 균일하게 부어야 합니다.';
+    w.appendChild(desc);
+
+    const area=document.createElement('div'); area.className='bowl-area'; area.style.cursor='default';
+    const canvas=document.createElement('canvas'); canvas.width=640; canvas.height=200;
+    area.appendChild(canvas); w.appendChild(area);
+
+    const ctx=canvas.getContext('2d'); let fillLevel=0;
+    function drawPour(){
+      ctx.clearRect(0,0,640,200); ctx.fillStyle='#F5ECD7'; ctx.fillRect(0,0,640,200);
+      ctx.fillStyle='#555'; ctx.beginPath(); ctx.ellipse(320,170,160,22,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#444'; ctx.beginPath(); ctx.moveTo(160,170); ctx.lineTo(172,115); ctx.lineTo(468,115); ctx.lineTo(480,170); ctx.closePath(); ctx.fill();
+      if(fillLevel>0){ctx.fillStyle='#D4A96A'; ctx.beginPath(); ctx.ellipse(320,158,148*Math.min(1,fillLevel/80),Math.min(26,fillLevel/3.5),0,0,Math.PI*2); ctx.fill();}
+      fillLevel=Math.min(100,fillLevel+0.5); st.raf=requestAnimationFrame(drawPour);
+    }
+    drawPour();
+
+    const gauge=createTimingGauge({label:'반죽 붓기 타이밍',zoneStart:38,zoneEnd:62,tries:3,onResult:(score)=>next(score)});
+    w.appendChild(gauge);
+  }
+
+  /* ── STAGE 3: 오븐에 굽기 ── */
+  function renderBake(w){
+    const desc=document.createElement('p'); desc.className='desc';
+    desc.textContent='오븐 온도를 180°C에 맞춰야 합니다. 온도계가 딱 맞는 순간 클릭하세요! 3번의 기회가 있어요.';
+    w.appendChild(desc);
+
+    const area=document.createElement('div'); area.className='bowl-area'; area.style.cursor='default';
+    const canvas=document.createElement('canvas'); canvas.width=640; canvas.height=200;
+    area.appendChild(canvas); w.appendChild(area);
+
+    const ctx=canvas.getContext('2d'); let prog=0;
+    function drawBake(){
+      ctx.clearRect(0,0,640,200); ctx.fillStyle='#F5ECD7'; ctx.fillRect(0,0,640,200);
+      ctx.fillStyle='#2C2C2C'; ctx.beginPath(); ctx.roundRect(180,10,280,170,10); ctx.fill();
+      ctx.fillStyle='#1A1A1A'; ctx.beginPath(); ctx.roundRect(198,26,244,130,6); ctx.fill();
+      const heat=Math.min(1,prog/60);
+      if(heat>0){ctx.fillStyle=`rgba(255,${Math.floor(120-heat*80)},0,${heat*0.4})`; ctx.beginPath(); ctx.roundRect(198,26,244,130,6); ctx.fill();}
+      const tartColor=prog<30?'#D4A96A':prog<65?'#C4894A':'#A0672A';
+      ctx.fillStyle=tartColor; ctx.beginPath(); ctx.arc(320,91,50,0,Math.PI*2); ctx.fill();
+      if(prog>=90){ctx.fillStyle='rgba(255,220,50,0.2)'; ctx.beginPath(); ctx.roundRect(198,26,244,130,6); ctx.fill();}
+      prog=Math.min(100,prog+0.4); st.raf=requestAnimationFrame(drawBake);
+    }
+    drawBake();
+
+    const gauge=createTimingGauge({label:'온도 맞추기 (180°C 구간)',zoneStart:42,zoneEnd:58,tries:3,onResult:(score)=>{if(st.raf)cancelAnimationFrame(st.raf);next(score);}});
+    w.appendChild(gauge);
+  }
+
+  /* ── STAGE 4: 자몽 데코 ── */
+  function renderDeco(w){
+    const desc=document.createElement('p'); desc.className='desc';
+    desc.textContent='자몽 슬라이스를 타이밍에 맞게 올려야 예쁜 데코가 됩니다. 5번 모두 핑크 구간에서 클릭하세요!';
+    w.appendChild(desc);
+
+    const plumSlices=[]; const TARGET=5;
+    const area=document.createElement('div'); area.className='bowl-area'; area.style.cursor='default';
+    const canvas=document.createElement('canvas'); canvas.width=640; canvas.height=200;
+    area.appendChild(canvas); w.appendChild(area);
+
+    const ctx=canvas.getContext('2d');
+    function drawPlumSlice(x,y,angle){
+      ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0);
+      ctx.fillStyle='#E8956D'; ctx.beginPath(); ctx.ellipse(0,0,28,13,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#F5B48A'; ctx.beginPath(); ctx.ellipse(-4,-3,16,7,0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#C06030'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(0,0,27,12,0,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+    function drawScene(){
+      ctx.clearRect(0,0,640,200); ctx.fillStyle='#F5ECD7'; ctx.fillRect(0,0,640,200);
+      ctx.fillStyle='#A0672A'; ctx.beginPath(); ctx.arc(320,105,80,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#7A4A20'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(320,105,78,0,Math.PI*2); ctx.stroke();
+      ctx.fillStyle='#C4894A'; ctx.beginPath(); ctx.arc(320,105,66,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#F5E6C8'; ctx.beginPath(); ctx.ellipse(320,102,48,36,0,0,Math.PI*2); ctx.fill();
+      plumSlices.forEach(p=>drawPlumSlice(p.x,p.y,p.angle));
+      st.raf=requestAnimationFrame(drawScene);
+    }
+    drawScene();
+
+    const gauge=createTimingGauge({
+      label:`자몽 올리기 타이밍 (0/${TARGET})`,
+      zoneStart:35,zoneEnd:65,tries:TARGET,
+      onResult:(score)=>{if(st.raf)cancelAnimationFrame(st.raf);next(score);}
+    });
+    gauge.querySelector('#tBarOuter').addEventListener('click',()=>{
+      if(plumSlices.length<TARGET){
+        const angle=(plumSlices.length/TARGET)*Math.PI*2-Math.PI/2;
+        plumSlices.push({x:320+Math.cos(angle)*48,y:105+Math.sin(angle)*38,angle:(Math.random()-0.5)*0.7});
+        const lbl=gauge.querySelector('#tLabel'); if(lbl) lbl.textContent=`자몽 올리기 타이밍 (${plumSlices.length}/${TARGET})`;
+      }
+    });
+    w.appendChild(gauge);
+  }
+
+  /* ── 결과 ── */
+  function renderResult(w){
+    const score=totalScore();
+    let grade,desc;
+    if(score>=90){grade='완벽한 타르트!';desc='유문암도 놀랄 수준이에요. 모든 단계를 완벽하게 클리어했습니다.';}
+    else if(score>=75){grade='맛있는 타르트!';desc='잘 완성됐어요. 약간의 실수가 있었지만 충분히 맛있을 것 같아요.';}
+    else if(score>=55){grade='그럭저럭 타르트';desc='아쉬운 부분이 있었어요. 한 번 더 도전해보세요!';}
+    else{grade='다시 도전해요!';desc='타이밍이 많이 아쉬웠어요. 연습하면 반드시 나아질 거예요.';}
+
+    const labels=['재료 섞기','틀에 붓기','오븐 굽기','자몽 데코'];
+    const box=document.createElement('div'); box.className='result-box';
+    box.innerHTML=`
+      <span class="result-icon">🥧</span>
+      <div class="result-grade">${grade}</div>
+      <div class="result-score">${score}점</div>
+      <div class="score-pills">${st.scores.map((s,i)=>`<div class="pill">${labels[i]}: ${s.v}점</div>`).join('')}</div>
+      <p class="result-desc">${desc}</p>
+      <p class="saving-msg" id="savingMsg">랭킹에 점수를 저장하는 중...</p>`;
+
+    const btns=document.createElement('div'); btns.className='btns'; btns.style.justifyContent='center';
+    const retryBtn=document.createElement('button'); retryBtn.className='pk-btn'; retryBtn.textContent='다시 만들기';
+    retryBtn.addEventListener('click',showGame);
+    const rankBtn=document.createElement('button'); rankBtn.className='ghost-btn'; rankBtn.textContent='랭킹 보기';
+    rankBtn.addEventListener('click',showRanking);
+    const homeBtn=document.createElement('button'); homeBtn.className='ghost-btn'; homeBtn.textContent='처음으로';
+    homeBtn.addEventListener('click',showMain);
+    btns.appendChild(retryBtn); btns.appendChild(rankBtn); btns.appendChild(homeBtn);
+    box.appendChild(btns); w.appendChild(box);
+
+    insertRanking(playerName, score)
+      .then(()=>{ const m=document.getElementById('savingMsg'); if(m) m.textContent=`✅ ${playerName}님의 ${score}점이 랭킹에 등록됐어요!`; })
+      .catch(()=>{ const m=document.getElementById('savingMsg'); if(m) m.textContent='⚠️ 랭킹 저장 실패. Supabase 설정을 확인해주세요.'; });
+  }
+
+  showMain();
+</script>
+</body>
+</html>
