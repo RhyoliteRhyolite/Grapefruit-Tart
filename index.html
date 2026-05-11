@@ -171,25 +171,51 @@
     .pill { background: #FFF0F5; color: #C2185B; border: 1px solid #FFB3CF; border-radius: 999px; font-size: 12px; padding: 4px 12px; }
     .saving-msg { font-size: 13px; color: #aaa; margin-top: 10px; min-height: 20px; }
     
-    /* 브금 버튼 */
-    .bgm-btn {
-      position: fixed; top: 16px; left: 16px; z-index: 1000;
-      width: 40px; height: 40px; border-radius: 50%;
+    /* 브금/테마 버튼 */
+    .bgm-btn, .theme-btn {
+      position: fixed; left: 20px; z-index: 1000;
+      width: 50px; height: 50px; border-radius: 50%;
       background: #fff; border: 2px solid #FFD6E8;
       display: flex; align-items: center; justify-content: center;
       font-size: 20px; cursor: pointer; box-shadow: 0 4px 6px rgba(255,107,157,0.1);
       transition: all 0.2s;
     }
-    .bgm-btn:hover { background: #FFF0F5; transform: scale(1.05); }
+    .bgm-btn { top: 20px; }
+    .theme-btn { top: 80px; }
+    .bgm-btn:hover, .theme-btn:hover { background: #FFF0F5; transform: scale(1.05); }
     .bgm-btn.off { opacity: 0.6; }
+
+    /* 다크모드 */
+    body.dark-mode { background: #121212; color: #eee; }
+    .dark-mode #app { color: #eee; }
+    .dark-mode .card { background: #1e1e1e; border-color: #333; }
+    .dark-mode .name-row input { background: #2c2c2c; color: #eee; border-color: #444; }
+    .dark-mode .name-row input:focus { border-color: #FF6B9D; }
+    .dark-mode .main-sub, .dark-mode .name-section label, .dark-mode .desc { color: #aaa; }
+    .dark-mode .ghost-btn { border-color: #FF6B9D; color: #FFB3CF; }
+    .dark-mode .ghost-btn:hover { background: #2c2c2c; }
+    .dark-mode .rank-item { background: #2c2c2c; border-color: #444; }
+    .dark-mode .rank-item.gold { background: #3a3212; border-color: #c9a600; }
+    .dark-mode .rank-item.silver { background: #2a2a2a; border-color: #999; }
+    .dark-mode .rank-item.bronze { background: #3d2a1b; border-color: #a66628; }
+    .dark-mode .step-dot { background: #333; border-color: #444; }
+    .dark-mode .stage-label { background: #2c2c2c; border-color: #444; color: #FFB3CF; }
+    .dark-mode .ing-card { background: #2c2c2c; border-color: #444; }
+    .dark-mode .ing-card.sel { background: #3a222c; border-color: #FF6B9D; }
+    .dark-mode .ing-card.wrong-sel { background: #401a1a; border-color: #E53935; }
+    .dark-mode .timing-wrap { background: #2c2c2c; border-color: #444; }
+    .dark-mode .result-box { background: linear-gradient(135deg, #2a161d, #1f1116); border-color: #444; }
+    .dark-mode .pill { background: #1a1a1a; border-color: #444; color: #FFB3CF; }
+    .dark-mode .bgm-btn, .dark-mode .theme-btn { background: #1e1e1e; border-color: #444; }
+    .dark-mode .bgm-btn:hover, .dark-mode .theme-btn:hover { background: #2c2c2c; }
   </style>
 </head>
 <body>
 <audio id="bgmAudio" loop>
-  <!-- 음악 파일을 준비했다면 아래 src 부분을 음악 파일 경로로 바꿔주세요. (예: bgm.mp3) -->
   <source src="bgm.mp3" type="audio/mpeg">
 </audio>
 <button id="bgmToggleBtn" class="bgm-btn off" title="배경음악 켜기/끄기">🔇</button>
+<button id="themeToggleBtn" class="theme-btn" title="다크모드 켜기/끄기">🌙</button>
 
 <div id="app"></div>
 <script>
@@ -208,6 +234,23 @@
       isBgmPlaying = true;
       bgmToggleBtn.textContent = '🔊';
       bgmToggleBtn.classList.remove('off');
+    }
+  });
+
+  /* ── 다크모드 토글 ── */
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  let isDarkMode = localStorage.getItem('tartDarkMode') === 'true';
+  if (isDarkMode) { document.body.classList.add('dark-mode'); themeToggleBtn.textContent = '☀️'; }
+  themeToggleBtn.addEventListener('click', () => {
+    isDarkMode = !isDarkMode;
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+      themeToggleBtn.textContent = '☀️';
+      localStorage.setItem('tartDarkMode', 'true');
+    } else {
+      document.body.classList.remove('dark-mode');
+      themeToggleBtn.textContent = '🌙';
+      localStorage.setItem('tartDarkMode', 'false');
     }
   });
 
@@ -236,6 +279,45 @@
     });
     if (!res.ok) throw new Error('insert fail');
   }
+
+  /* ── 효과음 (Web Audio API) ── */
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playSfx(type) {
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    
+    if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, now);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.start(now); osc.stop(now + 0.1);
+    } else if (type === 'success') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    } else if (type === 'fail') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.3);
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start(now); osc.stop(now + 0.3);
+    }
+  }
+
+  // 글로벌 클릭 이벤트 (버튼 소리)
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('.pk-btn, .ghost-btn, .ing-card, .change-name-btn, .back-btn');
+    if(t && !t.disabled) playSfx('click');
+  });
 
   /* ── 플레이어 이름 ── */
   let playerName = localStorage.getItem('tartPlayerName') || '';
@@ -414,7 +496,7 @@
       <div class="timing-score-flash" id="tFlash"></div>
       <div class="timing-tries" id="tTries">남은 기회: ${tries}회</div>`;
 
-    let pos=0,dir=1,speed=1.2,usedTries=0,totalSc=0,running=true,raf;
+    let pos=0,dir=1,speed=0.35,usedTries=0,totalSc=0,running=true,raf;
     function animate(){
       if(!running)return;
       pos+=dir*speed; if(pos>=100){pos=100;dir=-1;} if(pos<=0){pos=0;dir=1;}
@@ -433,10 +515,12 @@
         const ratio=1-distFromCenter/zoneHalf;
         s=Math.round(80+ratio*20);
         msg=s>=95?'🎯 PERFECT!':'✅ GOOD!';
+        if (typeof playSfx === 'function') playSfx('success');
       } else {
         const dist=Math.min(Math.abs(pos-zoneStart),Math.abs(pos-zoneEnd));
         s=Math.max(10,Math.round(60-dist*1.5));
         msg=s>=40?'😅 아쉬워요':'❌ MISS';
+        if (typeof playSfx === 'function') playSfx('fail');
       }
       totalSc+=s; usedTries++;
       const flash=wrap.querySelector('#tFlash'); if(flash) flash.textContent=msg+' ('+s+'점)';
@@ -446,7 +530,7 @@
         running=false; cancelAnimationFrame(raf);
         setTimeout(()=>onResult(Math.round(totalSc/tries)),400);
       } else {
-        speed=Math.min(3.8,speed+0.45);
+        speed=Math.min(1.8,speed+0.2);
       }
     });
     return wrap;
@@ -455,12 +539,12 @@
   /* ── STAGE 1: 재료 섞기 ── */
   function renderMix(w){
     const desc=document.createElement('p'); desc.className='desc';
-    desc.textContent='타르트에 필요한 재료 5가지를 정확히 골라주세요. 틀린 재료를 넣으면 감점됩니다.';
+    desc.textContent='타르트에 필요한 재료를 최소 5가지 이상 골라주세요. 올바른 재료만 골라야 높은 점수를 받습니다.';
     w.appendChild(desc);
-    st.selIng=new Set(); st.wrongCount=0;
+    st.selIng=new Set();
 
     const feedback=document.createElement('div'); feedback.className='ing-feedback';
-    feedback.style.color='#aaa'; feedback.textContent='재료를 선택하세요 (0 / 5)';
+    feedback.style.color='#aaa'; feedback.textContent='재료를 선택하세요 (0개 선택됨)';
     w.appendChild(feedback);
 
     const grid=document.createElement('div'); grid.className='ing-grid';
@@ -472,17 +556,14 @@
       card.innerHTML=`<span class="ico">${ing.icon}</span><span class="nm">${ing.name}</span><div class="chk">✓</div>`;
       card.addEventListener('click',()=>{
         if(st.selIng.has(ing.id)){
-          st.selIng.delete(ing.id); card.classList.remove('sel','wrong-sel');
-          if(!ing.ok) st.wrongCount=Math.max(0,st.wrongCount-1);
+          st.selIng.delete(ing.id); card.classList.remove('sel');
         } else {
-          st.selIng.add(ing.id); card.classList.add(ing.ok?'sel':'wrong-sel');
-          if(!ing.ok) st.wrongCount++;
+          st.selIng.add(ing.id); card.classList.add('sel');
         }
-        const correctSel=required.filter(r=>st.selIng.has(r)).length;
-        if(st.wrongCount>0){feedback.style.color='#E53935';feedback.textContent=`❌ 잘못된 재료가 ${st.wrongCount}개 포함됐어요`;}
-        else if(correctSel===5){feedback.style.color='#43A047';feedback.textContent='✅ 완벽해요! 5가지 재료를 모두 골랐습니다';}
-        else{feedback.style.color='#aaa';feedback.textContent=`재료를 선택하세요 (${correctSel} / 5)`;}
-        btn.disabled=!(correctSel===5&&st.wrongCount===0);
+        const totalSel=st.selIng.size;
+        if(totalSel>=5){feedback.style.color='#43A047';feedback.textContent=`${totalSel}개 선택됨 (다음 단계로 진행 가능)`;}
+        else{feedback.style.color='#aaa';feedback.textContent=`최소 5가지 이상 선택해야 합니다. (${totalSel}개 선택됨)`;}
+        btn.disabled=(totalSel<5);
       });
       grid.appendChild(card);
     });
@@ -490,7 +571,18 @@
 
     const btns=document.createElement('div'); btns.className='btns';
     const btn=document.createElement('button'); btn.className='pk-btn'; btn.textContent='재료 넣고 섞기'; btn.disabled=true;
-    btn.addEventListener('click',()=>next(100));
+    btn.addEventListener('click',()=>{
+      let correctCount = 0;
+      let wrongCount = 0;
+      st.selIng.forEach(id => {
+        if(required.includes(id)) correctCount++;
+        else wrongCount++;
+      });
+      const missedCount = required.length - correctCount;
+      let score = 100 - (missedCount * 15) - (wrongCount * 15);
+      if(score < 0) score = 0;
+      next(score);
+    });
     btns.appendChild(btn); w.appendChild(btns);
   }
 
@@ -549,56 +641,113 @@
   /* ── STAGE 4: 자몽 데코 ── */
   function renderDeco(w){
     const desc=document.createElement('p'); desc.className='desc';
-    desc.textContent='자몽 슬라이스를 타이밍에 맞게 올려야 예쁜 데코가 됩니다. 5번 모두 핑크 구간에서 클릭하세요!';
+    desc.textContent='리듬게임! 좌우에서 다가오는 자몽이 가운데 핑크색 원 안에 들어왔을 때 [HIT] 버튼을 누르세요 (총 5개).';
     w.appendChild(desc);
 
-    const plumSlices=[]; const TARGET=5;
-    const area=document.createElement('div'); area.className='bowl-area'; area.style.cursor='default';
+    const TARGET=5;
+    const area=document.createElement('div'); area.className='bowl-area'; area.style.cursor='default'; area.style.background='#FFF5F8';
     const canvas=document.createElement('canvas'); canvas.width=640; canvas.height=200;
     area.appendChild(canvas); w.appendChild(area);
 
+    const statusWrap=document.createElement('div');
+    statusWrap.style.textAlign='center'; statusWrap.style.marginBottom='10px';
+    statusWrap.style.fontFamily="'Jua', sans-serif"; statusWrap.style.fontSize='20px'; statusWrap.style.color='#FF6B9D';
+    statusWrap.style.minHeight='24px';
+    w.appendChild(statusWrap);
+
+    const hitBtnWrap=document.createElement('div');
+    hitBtnWrap.style.textAlign='center'; hitBtnWrap.style.marginBottom='20px';
+    const hitBtn=document.createElement('button'); hitBtn.className='pk-btn';
+    hitBtn.style.width='80px'; hitBtn.style.height='80px'; hitBtn.style.borderRadius='50%';
+    hitBtn.style.fontSize='20px'; hitBtn.style.padding='0'; hitBtn.textContent='HIT!';
+    hitBtnWrap.appendChild(hitBtn);
+    w.appendChild(hitBtnWrap);
+
+    let nodes=[]; let spawned=0; let hits=0; let totalScore=0; let running=true;
     const ctx=canvas.getContext('2d');
-    function drawPlumSlice(x,y,angle){
-      ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0);
-      ctx.fillStyle='#E8956D'; ctx.beginPath(); ctx.ellipse(0,0,28,13,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#F5B48A'; ctx.beginPath(); ctx.ellipse(-4,-3,16,7,0,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='#C06030'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(0,0,27,12,0,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
+    
+    function spawnNode() {
+      if(spawned>=TARGET) return;
+      const isLeft=Math.random()>0.5;
+      nodes.push({ x:isLeft?-30:670, y:100, speed:(isLeft?1:-1)*(3+Math.random()*1.5), active:true, missed:false });
+      spawned++;
+      if(spawned<TARGET) setTimeout(spawnNode, 1000 + Math.random()*800);
     }
+    setTimeout(spawnNode, 500);
+
     function drawScene(){
-      ctx.clearRect(0,0,640,200); ctx.fillStyle='#F5ECD7'; ctx.fillRect(0,0,640,200);
-      ctx.fillStyle='#A0672A'; ctx.beginPath(); ctx.arc(320,105,80,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='#7A4A20'; ctx.lineWidth=4; ctx.beginPath(); ctx.arc(320,105,78,0,Math.PI*2); ctx.stroke();
-      ctx.fillStyle='#C4894A'; ctx.beginPath(); ctx.arc(320,105,66,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#F5E6C8'; ctx.beginPath(); ctx.ellipse(320,102,48,36,0,0,Math.PI*2); ctx.fill();
-      plumSlices.forEach(p=>drawPlumSlice(p.x,p.y,p.angle));
+      if(!running) return;
+      ctx.clearRect(0,0,640,200);
+      
+      ctx.fillStyle='#FFD6E8'; ctx.fillRect(0,95,640,10);
+
+      ctx.fillStyle='rgba(255, 107, 157, 0.2)';
+      ctx.beginPath(); ctx.arc(320, 100, 30, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#FF6B9D'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(320, 100, 30, 0, Math.PI*2); ctx.stroke();
+
+      nodes.forEach(n=>{
+        if(!n.active) return;
+        n.x+=n.speed;
+        if(!n.missed && ((n.speed>0 && n.x>360) || (n.speed<0 && n.x<280))) {
+          n.missed=true; n.active=false; hits++;
+          statusWrap.textContent='❌ MISS (0점)'; statusWrap.style.color='#aaa';
+          if(typeof playSfx==='function') playSfx('fail');
+          checkEnd();
+        }
+        if(n.active){
+          ctx.save(); ctx.translate(n.x, n.y); ctx.rotate(n.x/20);
+          ctx.fillStyle='#E8956D'; ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.fill();
+          ctx.fillStyle='#F5B48A'; ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+      });
       st.raf=requestAnimationFrame(drawScene);
     }
     drawScene();
 
-    const gauge=createTimingGauge({
-      label:`자몽 올리기 타이밍 (0/${TARGET})`,
-      zoneStart:35,zoneEnd:65,tries:TARGET,
-      onResult:(score)=>{if(st.raf)cancelAnimationFrame(st.raf);next(score);}
-    });
-    gauge.querySelector('#tBarOuter').addEventListener('click',()=>{
-      if(plumSlices.length<TARGET){
-        const angle=(plumSlices.length/TARGET)*Math.PI*2-Math.PI/2;
-        plumSlices.push({x:320+Math.cos(angle)*48,y:105+Math.sin(angle)*38,angle:(Math.random()-0.5)*0.7});
-        const lbl=gauge.querySelector('#tLabel'); if(lbl) lbl.textContent=`자몽 올리기 타이밍 (${plumSlices.length}/${TARGET})`;
+    function checkEnd() {
+      if(hits>=TARGET) {
+        running=false; hitBtn.disabled=true;
+        setTimeout(()=>{ if(st.raf) cancelAnimationFrame(st.raf); next(Math.round(totalScore/TARGET)); }, 800);
+      }
+    }
+
+    hitBtn.addEventListener('click', ()=>{
+      if(!running) return;
+      let closest=null; let minDist=Infinity;
+      nodes.forEach(n=>{
+        if(n.active && !n.missed) {
+          const dist=Math.abs(n.x-320);
+          if(dist<minDist) { minDist=dist; closest=n; }
+        }
+      });
+      if(closest && minDist<60) {
+        closest.active=false;
+        let score=0; let msg=''; let c='#FF6B9D';
+        if(minDist<=12) { score=100; msg='🎯 PERFECT!'; }
+        else if(minDist<=25) { score=80; msg='✅ GREAT!'; }
+        else if(minDist<=40) { score=50; msg='👍 GOOD'; }
+        else { score=20; msg='😅 BAD'; c='#E53935'; }
+        totalScore+=score; hits++;
+        statusWrap.textContent=`${msg} (${score}점)`; statusWrap.style.color=c;
+        if(typeof playSfx==='function') { if(score>=80) playSfx('success'); else playSfx('fail'); }
+        checkEnd();
+      } else {
+        if(typeof playSfx==='function') playSfx('fail');
+        statusWrap.textContent='❌ 허공 터치!'; statusWrap.style.color='#aaa';
       }
     });
-    w.appendChild(gauge);
   }
 
   /* ── 결과 ── */
   function renderResult(w){
     const score=totalScore();
     let grade,desc;
-    if(score>=90){grade='완벽한 타르트!';desc='유문암도 놀랄 수준이에요. 모든 단계를 완벽하게 클리어했습니다.';}
+    if(score>=90){grade='완벽한 타르트!';desc='그 분도 놀랄 수준이에요. 모든 단계를 완벽하게 클리어했습니다.';}
     else if(score>=75){grade='맛있는 타르트!';desc='잘 완성됐어요. 약간의 실수가 있었지만 충분히 맛있을 것 같아요.';}
     else if(score>=55){grade='그럭저럭 타르트';desc='아쉬운 부분이 있었어요. 한 번 더 도전해보세요!';}
-    else{grade='다시 도전해요!';desc='타이밍이 많이 아쉬웠어요. 연습하면 반드시 나아질 거예요.';}
+    else{grade='정말 대단해요!';desc='이것도 음식이라고 가져온건가요?';}
 
     const labels=['재료 섞기','틀에 붓기','오븐 굽기','자몽 데코'];
     const box=document.createElement('div'); box.className='result-box';
